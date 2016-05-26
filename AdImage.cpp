@@ -3,11 +3,13 @@
 using namespace cv;
 using namespace std;
 
+#define EPS 1e-4
+
 Mat mascara;
 SIFT sift1, sift2;
 std::vector<cv::KeyPoint> key_points1, key_points2;
 cv::Mat descriptors1, descriptors2;
-std::vector<cv::DMatch> matches;
+std::vector<int> matches;
 cv::Mat union_logo;
 bool* grouped;
 
@@ -51,7 +53,9 @@ void AdImage::rectScale(cv::Rect& rect, double scale)
 
 double AdImage::pointDistance(cv::Point2f& a, cv::Point2f& b)
 {
-	return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+	double dis = sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+	if (abs(dis) < EPS) dis = 100;
+	return dis;
 }
 
 void AdImage::detectFace()
@@ -125,27 +129,33 @@ void AdImage::detectUnionpay()
 
 				if ((max_1 / max_2) <= 0.5)
 				{
-					matches.push_back(DMatch(i, idx_1, 0, sqrt(max_1)));
+					//matches.push_back(DMatch(i, idx_1, 0, sqrt(max_1)));
+					matches.push_back(idx_1);
 					circle(img, key_points2[idx_1].pt + Point2f(ROI.x, ROI.y), 2, cvScalar(255, 0, 0), CV_FILLED);
 				}
 			}
 
+			std::sort(matches.begin(), matches.end());
+			auto it = std::unique(matches.begin(), matches.end());
+			matches.resize(std::distance(matches.begin(), it));
 			for (int it1 = 0; it1 < matches.size(); it1++)
 			{
 				int count = 0;
 				for (int it2 = 0; it2 < matches.size(); it2++)
 				{
-					if (pointDistance(key_points2[matches[it1].trainIdx].pt, key_points2[matches[it2].trainIdx].pt) < 30)
+					if (pointDistance(key_points2[matches[it1]].pt, key_points2[matches[it2]].pt) < 50)
 					{
+					//	cout << key_points2[matches[it1]].pt << ' ' << key_points2[matches[it2]].pt << endl;
 						count++;
 					}
+					if (count >= 10) break;
 				}
 
 				//cout << count << endl;
 				if (count >= 10)
 				{
 					_num_unionpay++;
-					circle(img, key_points2[matches[it1].trainIdx].pt + Point2f(ROI.x, ROI.y), 30, cvScalar(0, 0, 255));
+					circle(img, key_points2[matches[it1]].pt + Point2f(ROI.x, ROI.y), 50, cvScalar(0, 0, 255));
 					break;
 				}
 			}

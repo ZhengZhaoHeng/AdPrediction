@@ -32,9 +32,10 @@ int main()
 		break;
 	}
 
-	//AdImage ad("credit_card_test.jpg");
+	//AdImage ad("credit_card_test2.jpg");
 	//cout << ad.get_num_unionpay() << endl;
 
 	//Close the handle after use or memory/resource leak
 	FindClose(handle);
+	system("pause");
 }
