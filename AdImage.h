@@ -13,7 +13,7 @@
 class AdImage
 {
 public:
-	AdImage(const char* file_name);
+	AdImage(const char* file_name, const char* logo);
 	~AdImage();
 	void rectScale(cv::Rect & rect, double scale);
 	double pointDistance(cv::Point2f & a, cv::Point2f & b);

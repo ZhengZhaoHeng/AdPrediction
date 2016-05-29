@@ -6,7 +6,7 @@ using namespace std;
 #define EPS 1e-4
 
 Mat mascara;
-SIFT sift1, sift2;
+SIFT sift1(0, 8, 0.1), sift2(0, 8, 0.1);
 std::vector<cv::KeyPoint> key_points1, key_points2;
 cv::Mat descriptors1, descriptors2;
 std::vector<int> matches;
@@ -24,15 +24,15 @@ double SIFTDistance(float* a, float* b)
 	return dis;
 }
 
-AdImage::AdImage(const char * file_name)
+AdImage::AdImage(const char * file_name, const char* logo)
 {
 	_file_name = file_name;
-	_cascade_face = "haarcascade_frontalface_alt.xml";
+	_cascade_face = "haarcascade_frontalface_alt2.xml";
 	_scale = 2;
 	_num_faces = 0;
 	_num_unionpay = 0;
 	_fullscreen = false;
-	union_logo = imread("unionPay_logo.jpg");
+	union_logo = imread(logo);
 	sift1(union_logo, mascara, key_points1, descriptors1);
 	grouped = new bool[key_points1.size()];
 	//detectFace();
@@ -60,6 +60,7 @@ double AdImage::pointDistance(cv::Point2f& a, cv::Point2f& b)
 
 void AdImage::detectFace()
 {
+	int threshold = 30;
 	CascadeClassifier faceClassifier;
 	vector<Rect> faces;
 	Mat img = imread(_file_name);
@@ -89,17 +90,21 @@ void AdImage::detectFace()
 void AdImage::detectUnionpay()
 {
 	Mat img = imread(_file_name);
-	int div_col = 3;
-	int div_row = 3;
-	Rect ROI(0, 0, img.cols / div_col, img.rows / div_row);
-	for (int dcol = 0; dcol < div_col; dcol++)
+	int div_col = 5;
+	int div_row = 5;
+	int threshold = 5;
+	Rect ROI(0, 0, 3 * img.cols / div_col, 3 * img.rows / div_row);
+	for (int dcol = 0; dcol < div_col - 2; dcol++)
 	{
-		for (int drow = 0; drow < div_row; drow++)
+		for (int drow = 0; drow < div_row - 2; drow++)
 		{
 			ROI.x = img.cols * dcol / div_col;
 			ROI.y = img.rows * drow / div_row;
 			sift2(img(ROI), mascara, key_points2, descriptors2);
-			matches.resize(0);
+			//imshow("dfdf", img(ROI));
+			//cvWaitKey(0);
+			//cvDestroyAllWindows();
+			//matches.resize(0);
 			for (int i = 0; i < key_points1.size(); i++)
 			{
 				grouped[i] = false;
@@ -127,11 +132,11 @@ void AdImage::detectUnionpay()
 					}
 				}
 
-				if ((max_1 / max_2) <= 0.5)
+				if ((max_1 / max_2) <= 0.6)
 				{
 					//matches.push_back(DMatch(i, idx_1, 0, sqrt(max_1)));
 					matches.push_back(idx_1);
-					circle(img, key_points2[idx_1].pt + Point2f(ROI.x, ROI.y), 2, cvScalar(255, 0, 0), CV_FILLED);
+					//circle(img, key_points2[idx_1].pt + Point2f(ROI.x, ROI.y), 2, cvScalar(255, 0, 0), CV_FILLED);
 				}
 			}
 
@@ -148,14 +153,14 @@ void AdImage::detectUnionpay()
 					//	cout << key_points2[matches[it1]].pt << ' ' << key_points2[matches[it2]].pt << endl;
 						count++;
 					}
-					if (count >= 10) break;
+					if (count >= threshold) break;
 				}
 
 				//cout << count << endl;
-				if (count >= 10)
+				if (count >= threshold)
 				{
 					_num_unionpay++;
-					circle(img, key_points2[matches[it1]].pt + Point2f(ROI.x, ROI.y), 50, cvScalar(0, 0, 255));
+					circle(img, key_points2[matches[it1]].pt + Point2f(ROI.x, ROI.y), 80, cvScalar(0, 255, 0), CV_FILLED);
 					break;
 				}
 			}
